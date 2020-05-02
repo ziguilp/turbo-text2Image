@@ -5,7 +5,7 @@ namespace Turbo\text2Image;
 class text2Image
 {
 
-    protected $font_file = __DIR__.'/../fonts/SourceHanSans-Regular.ttf';
+    protected $font_file = __DIR__ . '/../fonts/SourceHanSans-Regular.ttf';
 
     protected $font_size = 12;
 
@@ -21,7 +21,9 @@ class text2Image
 
     protected $text = '';
 
-    public function __construct(int $width = null,int $height = null)
+    public $image = null;
+
+    public function __construct(int $width = null, int $height = null)
     {
         if (!function_exists('imagettftext')) {
             throw new \Exception('Imagettftext is not enabled in your version of PHP');
@@ -29,7 +31,7 @@ class text2Image
         $this->width = $width;
         $this->height = $height;
         $this->pt_size = ($this->font_size / 96) * 72; // Convert px to pt (72pt per inch, 96px per inch);
-        
+
     }
 
     public function setFontFile($font)
@@ -62,9 +64,10 @@ class text2Image
     /**
      * 字符串分段检测
      */
-    protected function checkText(){
+    protected function checkText()
+    {
         $text = $this->text;
-        if(!$this->width){
+        if (!$this->width) {
             return $text;
         }
 
@@ -77,7 +80,7 @@ class text2Image
 
         $words_arr = [];
 
-        if($boxWidth > $this->width){
+        if ($boxWidth > $this->width) {
 
             $text_arr = explode("\n", $text);
 
@@ -85,12 +88,12 @@ class text2Image
 
                 $box = imagettfbbox($this->pt_size, 0, $this->font_file, $txt);
                 $boxWidth = abs($box[6] - $box[2]);
-               
-                if($boxWidth > $this->width){
+
+                if ($boxWidth > $this->width) {
                     $this->splitLineTxt($txt, $words_arr);
-                }else{
+                } else {
                     $words_arr[] = $txt;
-                }   
+                }
             }
 
             return implode("\n",  $words_arr);
@@ -98,24 +101,25 @@ class text2Image
         return $text;
     }
 
-    protected function splitLineTxt($txt, &$words_arr){
+    protected function splitLineTxt($txt, &$words_arr)
+    {
         $lines = [];
         $line_txt = "";
         $line_num = 0;
         $num = mb_strlen($txt);
-        for ($i=0; $i < $num ; $i++) {
+        for ($i = 0; $i < $num; $i++) {
             $word = mb_substr($txt, $i, 1);
-            $box = imagettfbbox($this->pt_size, 0, $this->font_file, $line_txt.$word);
+            $box = imagettfbbox($this->pt_size, 0, $this->font_file, $line_txt . $word);
             $boxWidth = abs($box[6] - $box[2]);
-            if($boxWidth + abs($box[0]) < $this->width){
+            if ($boxWidth + abs($box[0]) < $this->width) {
                 $line_txt .= $word;
-                if($i == $num - 1 ){
+                if ($i == $num - 1) {
                     array_push($words_arr, $line_txt);
                 }
-            }else{
+            } else {
                 $lines[$line_num] = $line_txt;
                 array_push($words_arr, $line_txt);
-                $line_num ++;
+                $line_num++;
                 $line_txt = $word;
             }
         }
@@ -139,12 +143,12 @@ class text2Image
         $x = 0;
         $y = 0 - $box[7];
 
-        if(!$this->width){
+        if (!$this->width) {
             $this->width = abs($box[6] - $box[2]);
         }
 
-        if(!$this->height){
-            $this->height = abs($box[7] - $box[1]) + $y/2;
+        if (!$this->height) {
+            $this->height = abs($box[7] - $box[1]) + $y / 2;
         }
 
         $this->bgImage();
@@ -157,7 +161,7 @@ class text2Image
                 $angle,
                 $x + $this->shadow['x'],
                 $y + $this->shadow['y'],
-                $this->allocateColor( isset($this->shadow['color']) ? $this->shadow['color'] : $this->color ),
+                $this->allocateColor(isset($this->shadow['color']) ? $this->shadow['color'] : $this->color),
                 $this->font_file,
                 $text
             );
@@ -173,7 +177,8 @@ class text2Image
         return $this;
     }
 
-    public function save($filename){
+    public function save($filename)
+    {
         imagesavealpha($this->image, true);
         imagepng($this->image, $filename);
     }
@@ -266,7 +271,7 @@ class text2Image
         if (is_string($color)) {
             // Remove #
             $hex = preg_replace('/^#/', '', $color);
-           
+
             // Support short and standard hex codes
             if (strlen($hex) === 3) {
                 list($red, $green, $blue) = [
@@ -280,7 +285,6 @@ class text2Image
                     $hex[2] . $hex[3],
                     $hex[4] . $hex[5]
                 ];
-
             } else {
                 throw new \Exception("Invalid color value: $color");
             }
@@ -292,7 +296,7 @@ class text2Image
                 'alpha' => $alpha
             ];
         }
- 
+
         // Enforce color value ranges
         if (is_array($color)) {
             // RGB default to 0
@@ -302,7 +306,7 @@ class text2Image
 
             // Alpha defaults to 1
             $color['alpha'] = isset($color['alpha']) ? $color['alpha'] : 1;
-            
+
             return [
                 'red' => (int) self::keepWithin((int) $color['red'], 0, 255),
                 'green' => (int) self::keepWithin((int) $color['green'], 0, 255),
@@ -346,5 +350,12 @@ class text2Image
             $color['blue'],
             127 - ($color['alpha'] * 127)
         );
+    }
+
+    public function __destruct()
+    {
+        if ($this->image !== null && get_resource_type($this->image) === 'gd') {
+            imagedestroy($this->image);
+        }
     }
 }
