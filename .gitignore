@@ -1,0 +1,4 @@
+/composer.lock
+/*.png
+/vendor/*
+/test*

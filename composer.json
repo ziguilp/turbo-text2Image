@@ -1,0 +1,19 @@
+{
+    "name": "turbo/text2image",
+    "description": "支持中文，文字转图片，支持自动断行，加阴影，text2Image, 文字生成图片",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "turbo",
+            "email": "turbo@fenhol.com"
+        }
+    ],
+    "require": {
+        "php": ">=5.6"
+    },
+    "autoload": {
+        "psr-4": {
+            "Turbo\\text2Image\\": "src"
+        }
+    }
+}
